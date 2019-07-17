@@ -1,0 +1,12 @@
+image: docker:latest
+
+stages:
+  - test
+
+test:
+ stage: test
+ image: "jfloff/alpine-python"
+ script:
+   - wget http://igc.groupeadeo.com/ADEO_CERTIFICATE_CHAIN.crt -O ./ADEO_CERTIFICATE_CHAIN.crt
+ tags:
+   - test-standard
