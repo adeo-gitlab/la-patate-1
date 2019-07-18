@@ -9,6 +9,7 @@ stages:
   - docker-test
   - dns-test
   - cache-npm-test
+  - igc-test
 
 ########################################
 ##  FUNCTIONS  ##
@@ -74,6 +75,13 @@ no-cache-npm-test-dev:
   <<: *runner_test_tags
   except:
     - master
+
+igc-test:
+  stage: igc-test
+  image: "jfloff/alpine-python"
+  script:
+    - wget http://igc.groupeadeo.com/ADEO_CERTIFICATE_CHAIN.crt -O ./ADEO_CERTIFICATE_CHAIN.crt
+  <<: *runner_test_tags
 
 ######################################
 ##  PROD WORKFLOW  ##
