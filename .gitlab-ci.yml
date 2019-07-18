@@ -1,12 +1,130 @@
-image: docker:latest
+variables:
+  REGISTRY_RELEASE: "docker-adeo-software-factory-release"
+  DOCKER_IMAGE_NAME: "detect-secrets"
+  DOCKER_IMAGE_VERSION: "0.10.3"
+  OC_OP_REGISTRY: "registry.infra.op.acp.adeo.com"
+  OC_PROJECT: "gitlab-runners-k8s-test-dev"
 
 stages:
-  - test
+  - docker-test
+  - dns-test
+  - cache-npm-test
 
-test:
- stage: test
- image: "jfloff/alpine-python"
- script:
-   - wget http://igc.groupeadeo.com/ADEO_CERTIFICATE_CHAIN.crt -O ./ADEO_CERTIFICATE_CHAIN.crt
- tags:
-   - test-standard
+########################################
+##  FUNCTIONS  ##
+#################
+.runner_test_tags: &runner_test_tags
+  tags:
+    - test-standard
+
+.runner_prod_tags: &runner_prod_tags
+  tags:
+    - runner-beta
+
+######################################
+##  DEV WORKFLOW  ##
+####################
+
+docker-dev:
+  stage: docker-test
+  image: docker:stable
+  script:
+    - docker info
+    - docker ps
+  <<: *runner_test_tags
+  except:
+    - master
+
+dns-test-manawa-dev:
+  stage: dns-test
+  image: ebits/openshift-client
+  script:
+    - oc login --insecure-skip-tls-verify=true https://manawa.euw3-gcp1.adeo.cloud --token=${MANAWA_TOKEN}
+  <<: *runner_test_tags
+  except:
+    - master
+    
+dns-test-gitlab-dev:
+  stage: dns-test
+  image: docker:stable
+  script:
+    - apk add curl
+    - curl -k https://gitlab.adeo.com
+  <<: *runner_test_tags
+  except:
+    - master
+    
+cache-npm-test-dev:
+  stage: cache-npm-test
+  cache:
+    paths:
+    - node_modules/
+  image: node:4.2.2
+  script:
+   - npm install
+  <<: *runner_test_tags
+  except:
+    - master
+
+no-cache-npm-test-dev:
+  stage: cache-npm-test
+  image: node:4.2.2
+  script:
+   - npm install
+  <<: *runner_test_tags
+  except:
+    - master
+
+######################################
+##  PROD WORKFLOW  ##
+#####################
+
+docker-prod:
+  stage: docker-test
+  image: docker:stable
+  script:
+    - docker info
+    - docker ps
+  <<: *runner_prod_tags
+  only:
+    - master
+    
+dns-test-manawa-prod:
+  stage: dns-test
+  image: ebits/openshift-client
+  script:
+    - oc login --insecure-skip-tls-verify=true https://openshift.op.acp.adeo.com --token=${MANAWA_TOKEN}
+  <<: *runner_prod_tags
+  only:
+    - master
+
+dns-test-gitlab:
+  stage: dns-test
+  image: docker:stable
+  script:
+    - apk add curl
+    - curl -k https://gitlab.adeo.com
+  <<: *runner_prod_tags
+  only:
+    - master
+    
+cache-npm-test-prod:
+  stage: cache-npm-test
+  cache:
+    paths:
+    - node_modules/
+  image: node:4.2.2
+  script:
+   - npm install
+  <<: *runner_prod_tags
+  only:
+    - master
+
+no-cache-npm-test-prod:
+  stage: cache-npm-test
+  image: node:4.2.2
+  script:
+   - npm install
+  <<: *runner_prod_tags
+  only:
+    - master

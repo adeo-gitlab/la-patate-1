@@ -1,0 +1,30 @@
+docker-dev:
+  stage: docker-test
+  image: docker:stable
+  script:
+    - docker info
+    - docker ps
+  <<: *runner_test_tags
+  except:
+    - master
+
+cache-npm-test-dev:
+  stage: cache-npm-test
+  cache:
+    paths:
+    - node_modules/
+  image: node:4.2.2
+  script:
+   - npm install
+  <<: *runner_test_tags
+  except:
+    - master
+
+no-cache-npm-test-dev:
+  stage: cache-npm-test
+  image: node:4.2.2
+  script:
+   - npm install
+  <<: *runner_test_tags
+  except:
+    - master
